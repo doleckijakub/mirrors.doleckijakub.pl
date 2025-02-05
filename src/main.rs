@@ -155,7 +155,7 @@ async fn main() -> std::io::Result<()> {
                     .files_listing_renderer(renderer)
                 )
     })
-    .bind("127.0.0.1:8081")?
+    .bind("127.0.0.1:8006")?
     .run()
     .await
 }
