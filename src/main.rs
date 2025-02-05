@@ -114,7 +114,7 @@ fn renderer(directory: &Directory, req: &HttpRequest) -> Result<ServiceResponse,
         };
 
         let size_bytes = if is_dir {
-            1 // TODO: directory size
+            fs_extra::dir::get_size(entry.path()).expect("fs_extra::dir::get_size")
         } else {
             metadata.len()
         };
