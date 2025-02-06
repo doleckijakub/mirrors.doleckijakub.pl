@@ -23,9 +23,21 @@ fn human_readable_size(size_bytes: u64) -> String {
 }
 
 fn renderer(directory: &Directory, req: &HttpRequest) -> Result<ServiceResponse, std::io::Error> {
+    let path = directory.path.clone();
     let req_path = req.path();
 
     let mut html = String::new();
+    
+    let mut entries = std::fs::read_dir(&path)?
+        .filter_map(|entry| entry.ok())
+        .collect::<Vec<_>>();
+    let entry_count = entries.len();
+    let total_files = walkdir::WalkDir::new(&path)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_type().is_file())
+        .count();
+    let size_total = human_readable_size(fs_extra::dir::get_size(path).expect("fs_extra::dir::get_size"));
 
     html.push_str(&format!("<!DOCTYPE html>
 <html lang=\"en\">
@@ -80,6 +92,7 @@ fn renderer(directory: &Directory, req: &HttpRequest) -> Result<ServiceResponse,
 </head>
 <body>
     <h1>Directory Listing for {req_path}</h1>
+    <h2>{entry_count} entries ({total_files} files total) - {size_total} total</h2>
     <table>
         <thead>
             <tr>
@@ -89,10 +102,6 @@ fn renderer(directory: &Directory, req: &HttpRequest) -> Result<ServiceResponse,
             </tr>
         </thead>
         <tbody>"));
-
-    let mut entries = std::fs::read_dir(directory.path.clone())?
-        .filter_map(|entry| entry.ok())
-        .collect::<Vec<_>>();
 
     entries.sort_by_key(|entry| entry.file_name());
     entries.sort_by_key(|entry| !entry.file_type().expect("entry.file_type()").is_dir());
